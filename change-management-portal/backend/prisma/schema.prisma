@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  REQUESTER
+  IMPLEMENTER
+  CHANGE_MANAGER
+  CAB_MEMBER
+  ADMIN
+  AUDITOR
+}
+
+enum ChangeType {
+  STANDARD
+  NORMAL
+  EMERGENCY
+}
+
+enum ChangeStatus {
+  DRAFT
+  SUBMITTED
+  RISK_ASSESSMENT
+  CAB_REVIEW
+  APPROVED
+  REJECTED
+  SCHEDULED
+  IN_PROGRESS
+  IMPLEMENTED
+  CLOSED
+  CANCELLED
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum CabReviewStatus {
+  PENDING
+  COMPLETED
+}
+
+enum CabVoteDecision {
+  APPROVE
+  REJECT
+  ABSTAIN
+}
+
+enum NotificationType {
+  CHANGE_SUBMITTED
+  RISK_ASSESSMENT_REQUIRED
+  CAB_REVIEW_REQUIRED
+  CAB_VOTE_CAST
+  CHANGE_APPROVED
+  CHANGE_REJECTED
+  CHANGE_SCHEDULED
+  CHANGE_IMPLEMENTED
+  CHANGE_CANCELLED
+  COMMENT_ADDED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role
+  department   String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  requestedChanges  ChangeRequest[] @relation("Requester")
+  implementedChanges ChangeRequest[] @relation("Implementer")
+  managedChanges    ChangeRequest[] @relation("ChangeManager")
+  cabVotes          CabVote[]
+  comments          Comment[]
+  auditLogs         AuditLog[]
+  notifications     Notification[]
+
+  @@map("users")
+}
+
+model ChangeRequest {
+  id           String       @id @default(uuid())
+  reference    String       @unique
+  title        String
+  description  String
+  justification String
+  type         ChangeType
+  status       ChangeStatus @default(DRAFT)
+
+  requesterId      String
+  requester        User    @relation("Requester", fields: [requesterId], references: [id])
+  implementerId    String?
+  implementer      User?   @relation("Implementer", fields: [implementerId], references: [id])
+  changeManagerId  String?
+  changeManager    User?   @relation("ChangeManager", fields: [changeManagerId], references: [id])
+
+  systemsAffected  String[]
+  plannedStart     DateTime?
+  plannedEnd       DateTime?
+
+  implementationPlan String?
+  testPlan            String?
+  backoutPlan         String?
+
+  riskLevel    RiskLevel?
+  riskScore    Int?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  submittedAt  DateTime?
+  closedAt     DateTime?
+
+  riskAssessment RiskAssessment?
+  cabReview      CabReview?
+  comments       Comment[]
+
+  @@map("change_requests")
+}
+
+model RiskAssessment {
+  id              String   @id @default(uuid())
+  changeRequestId String   @unique
+  changeRequest   ChangeRequest @relation(fields: [changeRequestId], references: [id], onDelete: Cascade)
+
+  impact          Int
+  probability     Int
+  urgency         Int
+  affectedUsers   Int
+  downtimeMinutes Int
+  notes           String?
+
+  score           Int
+  level           RiskLevel
+
+  assessedById    String
+  createdAt       DateTime @default(now())
+
+  @@map("risk_assessments")
+}
+
+model CabReview {
+  id              String            @id @default(uuid())
+  changeRequestId String            @unique
+  changeRequest   ChangeRequest     @relation(fields: [changeRequestId], references: [id], onDelete: Cascade)
+
+  scheduledAt     DateTime
+  status          CabReviewStatus   @default(PENDING)
+  outcome         CabVoteDecision?
+  createdAt       DateTime          @default(now())
+  completedAt     DateTime?
+
+  votes           CabVote[]
+
+  @@map("cab_reviews")
+}
+
+model CabVote {
+  id           String            @id @default(uuid())
+  cabReviewId  String
+  cabReview    CabReview         @relation(fields: [cabReviewId], references: [id], onDelete: Cascade)
+  reviewerId   String
+  reviewer     User              @relation(fields: [reviewerId], references: [id])
+  decision     CabVoteDecision
+  comment      String?
+  createdAt    DateTime          @default(now())
+
+  @@unique([cabReviewId, reviewerId])
+  @@map("cab_votes")
+}
+
+model Comment {
+  id              String        @id @default(uuid())
+  changeRequestId String
+  changeRequest   ChangeRequest @relation(fields: [changeRequestId], references: [id], onDelete: Cascade)
+  authorId        String
+  author          User          @relation(fields: [authorId], references: [id])
+  body            String
+  createdAt       DateTime      @default(now())
+
+  @@map("comments")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  entityType String
+  entityId   String
+  action     String
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  changes    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+model Notification {
+  id         String           @id @default(uuid())
+  userId     String
+  user       User             @relation(fields: [userId], references: [id])
+  type       NotificationType
+  title      String
+  message    String
+  entityType String?
+  entityId   String?
+  read       Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+
+  @@index([userId, read])
+  @@map("notifications")
+}

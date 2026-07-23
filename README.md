@@ -170,6 +170,7 @@ Skills and plugins that extend AI coding agents (Claude Code, Cursor, Codex) for
 - [Kedro](https://kedro.org/) - Open-source Python framework for creating reproducible, maintainable, and modular data science code.
 - [CWL](https://www.commonwl.org/) - Common Workflow Language for describing analysis tools and workflows portably.
 - [Papermill](https://papermill.readthedocs.io/) - Parameterize and execute Jupyter Notebooks as workflows.
+- [Supabase Python Client](https://github.com/supabase/supabase-py) - Python SDK for Supabase's open-source Postgres backend, with pgvector support for building RAG pipelines and AI agent memory in research data platforms.
 
 ## Preprint & Publication Tools
 
