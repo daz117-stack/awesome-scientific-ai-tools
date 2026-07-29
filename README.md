@@ -56,6 +56,7 @@ Skills and plugins that extend AI coding agents (Claude Code, Cursor, Codex) for
 - [AI Session Logger](https://github.com/Harsh9005/ai-session-logger) - Persistent session memory — track files, decisions, and progress across conversations.
 - [Scientific Agent Skills](https://github.com/K-Dense-AI/scientific-agent-skills) - Open collection of scientific skills for Claude Code and other AI coding agents across multiple research domains.
 - [Awesome Claude Code](https://github.com/hesreallyhim/awesome-claude-code) - Curated list of Claude Code extensions, skills, and resources.
+- [Taste Skill](https://github.com/Leonxlnx/taste-skill) - Portable agent skill that enforces stronger layout, typography, motion, and spacing principles in AI-generated interfaces.
 
 ## Literature Search & Discovery
 
